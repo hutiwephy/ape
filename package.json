@@ -1,0 +1,35 @@
+{
+  "name": "@hutiwephy/ape",
+  "version": "1.0.0",
+  "description": "Authenticate and Encrypt HTTP with User Credentials (Not TLS-SRP).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx webpack",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hutiwephy/ape.git"
+  },
+  "keywords": [
+    "Authenticated",
+    "Encrypted",
+    "Payload",
+    "Exchange",
+    "HTTP",
+    "ape"
+  ],
+  "author": "hutiwephy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hutiwephy/ape/issues"
+  },
+  "homepage": "https://github.com/hutiwephy/ape#readme",
+  "dependencies": {
+    "crypto-js": "^4.2.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^6.0.1"
+  }
+}
