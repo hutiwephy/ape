@@ -70,3 +70,128 @@ The HTTP Response will must not echo back the Authorization header and the body 
 ## Documentation
 This repository also contains a NodeJS module and browser library that attempts to provide support to the spec above.
 
+```js
+const ape = require("@hutiwephy/ape");
+```
+
+```html
+<script src="/ape.min.js"></script>
+```
+
+### APE core
+
+#### ape.request
+Performs an asynchronous request with ape functionality
+
+#### ape.libpath (NodeJS only)
+Path to the Browser JS library
+
+### ape.Session
+This class bundles all the required methods for verification and Encryption
+
+```js
+// a Session can be built from a JSON Web Token string
+var session = new ape.Session(token);
+
+// or a client id and a client secret
+var session = new ape.Session(id, secret);
+
+// however when provided with a string this must be in base64 format
+var session = new ape.Session(btoa(id), btoa(secret));
+
+// you can also overide or extend the JWT by passing extra options
+var session = new ape.Session(btoa(id), btoa(secret), {
+    header: {},
+    payload: {},
+});
+```
+
+#### session.jwt
+Returns the parsed JWT
+
+#### session.clientId
+Returns the Client Id in either `Buffer` or `Uint8Array` format.
+
+#### session.token
+Returns a string version of the JWT if the key is present
+
+#### session.verify
+Returns true or false depending on whether the verification succeeded or failed
+
+this must be called before the `session.encode` or `session.decode` functions, when the client secret was not provided to the constructor.
+
+#### session.encode
+Encrypts and encodes a chunk
+
+#### session.decode
+Decrypts and decodes a chunk
+
+### ExpressJS integration (NodeJS only)
+example: 
+```js
+const express = require("express");
+const ape = require("ape");
+const bodyparser = require("body-parser");
+
+
+var app = express();
+var api = express.Router();
+
+api.use(ape((id)=>{
+    return // client secret
+}));
+api.use((err, req, res, next)=>{
+    // Handle and tranform ape errors
+});
+api.use(bodyparser.json());
+
+api.get("/some/path", (req, res, next)=>{
+    res.ape.json({
+        ok: true,
+    });
+});
+
+api.get("/some/other/path", (req, res, next)=>{
+    res.ape.send("token: ").ape.send(req.session.token);
+});
+
+
+app.use("/api", api);
+app.get(ape.libroute);
+app.get("/", (req, res, next)=>{
+    res.sendFile("./wwww/index.html");
+});
+```
+
+#### ape()
+APE Middleware
+
+#### express.Response.ape.send()
+Send a chunk encrypted with the request key
+
+#### express.Response.ape.json()
+Send a object as a chunk encrypted with the request key
+
+#### express.Request.ape.session
+`ape.Session` instance decoded and signed by the APE Middleware
+
+### Browser Extensions
+This library extends some functionality on the Browser
+
+#### window.CryptoJS
+The [CryptoJS](https://www.npmjs.com/package/crypto-js) library is fully exposed for personal usage
+
+#### window.hash
+Wrapper function around multiple CryptoJS hashing functions
+
+#### window.request()
+Promise based HTTP Request function used by `ape.request()`
+
+#### Uint8Array.concat()
+NodeJS Buffer like concatenation function
+
+#### Uint8Array.prototype.toString()
+NodeJS Buffer like toString function with encoding
+
+#### window.WordArray2ArrayBuffer()
+Convert CryptoJS WordArray to a Uint8Array

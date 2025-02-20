@@ -46,7 +46,11 @@ module.exports = (function(){
                     next(err);
                 }
 
-                if(!session.verify(callback(req.session.clientId))){
+                try{
+                    if(!session.verify(callback(req.session.clientId))){
+                        next(new Session.FailedVerification());
+                    }
+                }catch(err){
                     next(new Session.FailedVerification());
                 }
 
