@@ -137,3 +137,6 @@ TODO.*
 
 # IDE Files
 .vscode
+
+# Unnecessary
+package-lock.json

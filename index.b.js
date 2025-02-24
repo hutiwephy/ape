@@ -1,10 +1,18 @@
 const CryptoJS = require("crypto-js");
 const Session = require("./lib/session.js");
 const {hash, WordArray2ArrayBuffer} = require("./lib/extensions.js");
+const jwt = require("./lib/jwt.js");
 
-window.hash = hash;
-window.WordArray2ArrayBuffer = WordArray2ArrayBuffer;
-window.CryptoJS = CryptoJS;
-window.request = require("./lib/request/browser.js");
-window.ape.Session = Session;
-window.ape.request = require("./lib/request.js")(window.request);
+module.exports = {
+    jwt: {
+        RegisteredClaims: jwt.RegisteredClaims,
+    },
+    hash,
+    WordArray2ArrayBuffer,
+    CryptoJS,
+    request: require("./lib/request/browser.js"),
+    ape: {
+        Session,
+        request: require("./lib/request.js")(require("./lib/request/browser.js")),
+    },
+};

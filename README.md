@@ -12,6 +12,28 @@ This project aims to solve one of the biggest problems with decentralized apps r
     - [Request](#request)
     - [Response](#response)
   - [Documentation](#documentation)
+    - [ape](#ape-core)
+      - [request()](#ape_request)
+      - [response](#ape_response)
+      - [libpath](#ape_libpath)
+      - [Session()](#ape_session)
+        - [jwt](#ape_session_jwt)
+        - [clientId](#ape_session_clientid)
+        - [token](#ape_session_token)
+        - [verify()](#ape_session_verify)
+        - [encode()](#ape_session_encode)
+        - [decode()](#ape_session_decode)
+        - [parse()](#ape_session_parse)
+    - [CryptoJS](#cryptojs)
+    - [hash()](#hash)
+    - [WordArray2ArrayBuffer()](#wordarray2arraybuffer)
+    - [request()](#resquest)
+    - [Uint8Array](#uint8array_concat)
+      - [concat()](#uint8array_concat)
+      - [toString()](#uint8array_tostring)
+    - [jwt](#json-web-tokens)
+      - [RegisteredClaims](#jwt_registeredclaims)
+      - [validationOptions](#jwt_validationoptions)
 
 ## How does it work?
 This data exchange method requires the client and the server to know an identifier and a secret.
@@ -78,19 +100,69 @@ const ape = require("@hutiwephy/ape");
 <script src="/ape.min.js"></script>
 ```
 
-### APE core
+## APE core
 
-#### ape.request
+### <span id="ape_request"></span> `ape.request(method, url, client_id, client_secret, headers, body)`
 Performs an asynchronous request with ape functionality
 
-#### ape.libpath (NodeJS only)
+**Parameters**:
+  - **`method`**: `string` <br>
+    Method to be used
+
+    **values**:
+      - `GET`
+      - `POST`
+      - `PUT`
+      - `DELETE`
+
+  - **`url`**: `string`, `URL` <br>
+    URL to perform request.
+
+  - **`client_id`**: `string`, `ArrayBufferLike` <br>
+    Client id.
+    If string then it must be encoded in Base64.
+
+  - **`client_secret`**: `string`, `ArrayBufferLike` <br>
+    Client secret.
+    If string then it must be encoded in Base64.
+
+  - **`headers`** (optional): `null`, `OutgoingHttpHeaders` <br>
+    Headers to be provided.
+  
+  - **`body`** (optional): `null`, `string` <br>
+    Body to be sent.
+
+
+**Returns**:
+  - `Promise` <br>
+    Server Response
+
+    **onfullfilled**: [`ape.Response`](#ape_response) <br>
+    **onferror**: `Error`, `TypeError` <br>
+
+
+
+### <span id="ape_response"></span> `ape.Response`
+Object containing a raw and parse attempt of the response body
+
+```js
+{
+    raw: string|Buffer,
+    decoded: Uint8Array|Buffer,
+}
+```
+
+
+### <span id="ape_libpath"></span> `ape.libpath` (NodeJS only)
 Path to the Browser JS library
 
-### ape.Session
+
+
+## <span id="ape_session"></span> `ape.Session`
 This class bundles all the required methods for verification and Encryption
 
 ```js
-// a Session can be built from a JSON Web Token string
+// A Session can be built from a JSON Web Token string
 var session = new ape.Session(token);
 
 // or a client id and a client secret
@@ -106,92 +178,230 @@ var session = new ape.Session(btoa(id), btoa(secret), {
 });
 ```
 
-#### session.jwt
+### <span id="ape_session_jwt"></span> `session.jwt`
 Returns the parsed JWT
 
-#### session.clientId
+
+
+### <span id="ape_session_clientid"></span> `session.clientId`
 Returns the Client Id in either `Buffer` or `Uint8Array` format.
 
-#### session.token
-Returns a string version of the JWT if the key is present
 
-#### session.verify
+
+### <span id="ape_session_token"></span> `session.token`
+Returns the `string` used in the Authorization header, if the key is present.
+
+
+
+### <span id="ape_session_verify"></span> `session.verify(secret, options)`
 Returns true or false depending on whether the verification succeeded or failed
 
-this must be called before the `session.encode` or `session.decode` functions, when the client secret was not provided to the constructor.
+This method must be called before the `session.encode` or `session.decode` functions, when the client secret was not provided to the constructor.
 
-#### session.encode
-Encrypts and encodes a chunk
+> Note: 
+>  - This method also throws errors it is recommended to catch and handle them
+>  - This Method only accepts Base64 encoded strings as secrets
 
-#### session.decode
-Decrypts and decodes a chunk
+**Parameters**:
+  - **`secret`**: `null`, `string`, `ArrayBufferLike` <br>
+    Client secret.
+    If string then it must be encoded in Base64.
 
-### ExpressJS integration (NodeJS only)
-example: 
-```js
-const express = require("express");
-const ape = require("ape");
-const bodyparser = require("body-parser");
-
-
-var app = express();
-var api = express.Router();
-
-api.use(ape((id)=>{
-    return // client secret
-}));
-api.use((err, req, res, next)=>{
-    // Handle and tranform ape errors
-});
-api.use(bodyparser.json());
-
-api.get("/some/path", (req, res, next)=>{
-    res.ape.json({
-        ok: true,
-    });
-});
-
-api.get("/some/other/path", (req, res, next)=>{
-    res.ape.send("token: ").ape.send(req.session.token);
-});
+  - **`options`**: [`jwt.validationOptions`](#jwt_validationoptions) <br>
+    Additional JWT validation options.
+    `validators.subject` will be ignored.
+    `tolerance` must be set to perform `iat` (Issued At) validation.
 
 
-app.use("/api", api);
-app.get(ape.libroute);
-app.get("/", (req, res, next)=>{
-    res.sendFile("./wwww/index.html");
-});
-```
+**Returns**:
+  - `boolean` <br>
+    
 
-#### ape()
-APE Middleware
 
-#### express.Response.ape.send()
-Send a chunk encrypted with the request key
+### <span id="ape_session_encode"></span> `session.encode(chunk)`
+If key is populated it will encode a chunk of data into a body chunk
 
-#### express.Response.ape.json()
-Send a object as a chunk encrypted with the request key
+**Parameters**:
+  - **`chunk`**: `string`, `ArrayBufferLike` <br>
+    UTF-8 string or Array of Bytes to encode
 
-#### express.Request.ape.session
-`ape.Session` instance decoded and signed by the APE Middleware
 
-### Browser Extensions
+**Returns**:
+  - `string` <br>
+    Body chunk string
+
+
+
+### <span id="ape_session_decode"></span> `session.decode(chunk)`
+If key is populated it will decode a body chunk into a chunk of data
+
+**Parameters**:
+  - **`chunk`**: `string` <br>
+    UTF-8 string to decode
+
+
+**Returns**:
+  - `Buffer`, `Uint8Array` <br>
+    Raw decoded bytes
+
+
+
+### <span id="ape_session_parse"></span> `session.parse(body)`
+Parse a Request or Response body
+
+**Parameters**:
+  - **`body`**: `string` <br>
+    UTF-8 string to decode
+
+
+**Returns**:
+  - `Buffer`, `Uint8Array` <br>
+    Raw decoded bytes
+
+
+
+## Browser Extensions
 This library extends some functionality on the Browser
 
-#### window.CryptoJS
+### <span id="cryptojs"></span> `window.CryptoJS`
 The [CryptoJS](https://www.npmjs.com/package/crypto-js) library is fully exposed for personal usage
 
-#### window.hash
+### <span id="hash"></span> `window.hash(algorithm, message)`
 Wrapper function around multiple CryptoJS hashing functions
 
-#### window.request()
+**Parameters**:
+  - **`algorithm`**: `string` <br>
+    Algorithm to use
+
+    **values**:
+      - `MD5`
+      - `RIPEMD160`
+      - `SHA1`
+      - `SHA224`
+      - `SHA256`
+      - `SHA384`
+      - `SHA512`
+  
+  - **`message`**: `string`, `ArrayBufferLike` <br>
+    Message to encode.
+    Can be a UTF-8 string or an Array of bytes.
+
+
+**Returns**:
+  - `Buffer`, `Uint8Array` <br>
+    Resulting Bytes
+
+
+
+### <span id="wordarray2arraybuffer"></span> `window.WordArray2ArrayBuffer(wa)`
+Convert CryptoJS WordArray to a Uint8Array
+
+**Parameters**:
+  - **`wa`**: `CryptoJS.lib.WordArray` <br>
+    WordArray to convert
+
+
+**Returns**:
+  - `Uint8Array` <br>
+    Resulting Bytes
+
+
+
+### <span id="request"></span> `window.request(method, url, headers, body)`
 Promise based HTTP Request function used by `ape.request()`
 
-#### Uint8Array.concat()
-NodeJS Buffer like concatenation function
+**Parameters**:
+  - **`method`**: `string` <br>
+    Method to be used
 
-#### Uint8Array.prototype.toString()
-NodeJS Buffer like toString function with encoding
+    **values**:
+      - `GET`
+      - `POST`
+      - `PUT`
+      - `DELETE`
 
-#### window.WordArray2ArrayBuffer()
-Convert CryptoJS WordArray to a Uint8Array
+  - **`url`**: `string`, `URL` <br>
+    URL to perform request.
+
+  - **`headers`** (optional): `null`, `OutgoingHttpHeaders` <br>
+    Headers to be provided.
+  
+  - **`body`** (optional): `null`, `string` <br>
+    Body to be sent.
+
+
+**Returns**:
+  - `Promise` <br>
+    Server Response
+
+    **onfullfilled**: `string`, `Buffer` <br>
+    **onferror**: `Error`, `TypeError` <br>
+
+
+
+### <span id="uint8array_concat"></span> `Uint8Array.concat()`
+NodeJS Buffer like concatenation function.
+
+**Parameters**:
+  (Takes any iterable)
+
+
+**Returns**:
+  - `Uint8Array` <br>
+    Resulting Bytes.
+
+
+### <span id="uint8array_tostring"></span> `Uint8Array.prototype.toString(encoding)`
+NodeJS Buffer like toString function with encoding.
+Defaults to `utf8`
+
+**Parameters**:
+  - **`encoding`**: `string` <br>
+    Target encoding
+
+    **values**:
+      - `utf8`
+      - `base64`
+      - `base64url`
+      - `hex`
+
+
+**Returns**:
+  - `string` <br>
+    Resulting string.
+
+
+
+## JSON Web Tokens
+
+### <span id="jwt_registeredclaims"></span> `jwt.RegisteredClaims`
+Enum of all JWT Registered claims
+
+```js
+const RegisteredClaims = {
+    ISSUER: "iss",
+    SUBJECT: "sub",
+    AUDIENCE: "aud",
+    EXPIRATION: "exp",
+    NOTBEFORE: "nbf",
+    ISSUEDAT: "iat",
+    JWTID: "jti"
+};
+```
+
+### <span id="jwt_validationoptions"></span> `jwt.validationOptions`
+Object containing data relevant for the validation of a JSON Web Token
+
+```js
+{
+    critical?:     Array.<string>, // values can be any of jwt.RegisteredClaims
+    date?:         number,
+    maxlifetime?:  number,
+    tolerance?:    number, // Must be set to perform iat, exp and nbf validation
+    validators?: {
+        issuer?:   Array.<string> | function(string):boolean,
+        audience?: Array.<string> | function(string):boolean,
+        jwtid?:    Array.<string> | function(string):boolean,
+    },
+}
+```

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx webpack",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm install & npm run build"
   },
   "repository": {
     "type": "git",
@@ -28,8 +28,5 @@
   "homepage": "https://github.com/hutiwephy/ape#readme",
   "dependencies": {
     "crypto-js": "^4.2.0"
-  },
-  "devDependencies": {
-    "webpack-cli": "^6.0.1"
   }
 }
